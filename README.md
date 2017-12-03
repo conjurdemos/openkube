@@ -1,6 +1,6 @@
-# Kubernetes
+# Openshift/Kubernetes Conjur demo
 
-Demonstrates the use of Conjur in Kubernetes for machine identity and secrets delivery.
+Demonstrates the use of Conjur in Kubernetes or Openshift for machine identity and secrets delivery.
 
 As a secondary objective, which may be refactored to a separate demo in the future, this repo shows a multi-node master cluster with failover. 
 
@@ -31,29 +31,3 @@ Prerequisites:
 - 4_deploy.sh - deploys the `webapp` application and starts the containers fetching secrets.
 - 5_delete_deployment.sh - deletes all the k8s objects.
 - webapp.yaml - Kubernetes description for the `webapp` application. 
-
-# API key scale demo (deprecated)
-
-`./scale_demo` (directory) - scripts and support for running the scalability demo
-
-- 0_demo_init.sh - creates users, updates passwords, loads weave scope, etc.
-- 1_load_app_policy.sh - loads webapp1-policy.yml
-- 2_setup_deployment.sh - generates HF token and stashes meta info in a configMap
-- 3_deploy.sh - launches deployment for webapp1
-- 4_delete_deployment.sh - deletes entire deployment
-- 5_cleanup_host_factory.sh - revokes (deletes) old HF tokens
-- audit_policy.sh - compares a policy against current Conjur state, reports any diffs
-- watch_container_log.sh - alternative to weave scope, shows container activity
-- users-policy.yml - defines demo users
-- webapp1-policy.yml - defines webapp1 security schema
-- webapp1.yaml - k8s deployment description
-- EDIT.ME - sourced by scripts in lieu of .conjurrc for RESTful apps
-- load_policy.sh - loads a policy file into conjur
-- setup_deployment.sh - sets up a deployment per input parameters
-- launch_deployment.sh - launches a deployment setup by setup_deployment.sh
-- cleanup_host_factory.sh - revokes all tokens for a given host factory
-- build (directory) - for building the deployment container image
-  - Dockerfile - build description for demo container
-  - build.sh - script that generates build
-  - webapp1.sh - "application" that runs in each demo container in deployment
-
