@@ -1,0 +1,2 @@
+conjur_server_build/*.deb
+authn_k8s_scale_demo/build/*.gz
