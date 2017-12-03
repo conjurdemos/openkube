@@ -1,0 +1,77 @@
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: webapp-summon
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: webapp-summon
+    spec:
+      volumes:
+        - name: conjur-access-token
+          emptyDir:
+            medium: Memory
+        - name: conjur-summon
+          emptyDir:
+            medium: Memory
+
+      initContainers:
+      - name: copy-summon
+        image: webapp:local
+        command: [ ./copy-summon.sh ]
+        volumeMounts:
+        - mountPath: /summon
+          name: conjur-summon
+
+      containers:
+      - name: webapp-authenticator
+        image: webapp:local
+        command: [ ./authenticator.rb ]
+        env:
+        - name: CONJUR_APPLIANCE_URL
+          value: https://conjur-follower.conjur.svc.cluster.local/api
+        - name: CONJUR_AUTHN_URL
+          value: https://conjur-follower.conjur.svc.cluster.local/api/authn-k8s/minikube/default
+        - name: CONJUR_ACCOUNT
+          value: dev
+        - name: CONJUR_AUTHN_LOGIN
+          value: webapp-summon
+        - name: CONJUR_SSL_CERTIFICATE
+          valueFrom:
+            configMapKeyRef:
+              name: webapp
+              key: ssl_certificate
+        - name: CONJUR_CLIENT_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: conjur-client-api-key
+              key: api-key
+        volumeMounts:
+        - mountPath: /run/conjur
+          name: conjur-access-token
+
+      - name: webapp-summon
+        image: webapp:local
+        command: [ /summon/summon, -p, /summon/summon-conjur, ./webapp.sh ]
+        env:
+        - name: CONJUR_APPLIANCE_URL
+          value: https://conjur-follower.conjur.svc.cluster.local/api
+        - name: CONJUR_MAJOR_VERSION
+          value: "4"
+        - name: CONJUR_AUTHN_TOKEN_FILE
+          value: /run/conjur/access-token
+        - name: CONJUR_ACCOUNT
+          value: dev
+        - name: CONJUR_SSL_CERTIFICATE
+          valueFrom:
+            configMapKeyRef:
+              name: webapp
+              key: ssl_certificate
+        volumeMounts:
+        - mountPath: /run/conjur/
+          name: conjur-access-token
+        - mountPath: /summon
+          name: conjur-summon

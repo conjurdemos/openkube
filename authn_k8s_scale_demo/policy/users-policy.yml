@@ -1,0 +1,35 @@
+---
+# initializes users for scalability-k8s demo
+# ted - k8s admin
+# bob - devops admin
+# alice - db_admin
+# carol - developer
+
+- !group k8s_admin
+- !group devops
+- !group ops
+- !group db_admin
+
+# k8s_ and devops admin groups are members of the ops admin group
+- !grant
+  role: !group ops
+  members:
+  - !group k8s_admin
+  - !group devops
+
+- !user ted
+- !grant
+  role: !group k8s_admin
+  member: !user ted
+
+- !user bob
+- !grant
+  role: !group devops 
+  member: !user bob
+
+- !user alice
+- !grant
+  role: !group db_admin
+  member: !user alice
+
+- !user carol

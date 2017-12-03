@@ -1,0 +1,21 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: conjur-cli
+  labels:
+    app: web
+spec:
+  containers:
+  - name: conjur-cli
+    image: conjur-cli:local
+    env:
+    - name: CONJUR_APPLIANCE_URL
+      value: https://conjur-master.conjur.svc.cluster.local/api
+    - name: CONJUR_ACCOUNT
+      value: dev
+    - name: CONJUR_SSL_CERTIFICATE
+      valueFrom:
+        configMapKeyRef:
+          name: cli-conjur
+          key: ssl_certificate

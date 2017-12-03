@@ -1,0 +1,15 @@
+- !policy
+  id: conjur/authn-k8s/minikube/conjur
+  owner: !group /ops
+  body:
+  - !webservice
+    annotations:
+      kubernetes/namespace: conjur
+
+  - !host client
+
+  - !permit
+    resource: !webservice
+    privilege: [ read, execute ]
+    roles:
+      - !host client
