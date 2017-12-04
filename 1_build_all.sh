@@ -1,10 +1,12 @@
-#!/bin/bash -e
-set -o pipefail
+#!/bin/bash 
+set -eo pipefail
 
-# after running this, the demo will run w/o internet access
+# Edit the line below with the path to the Conjur appliance image tarfile
+CONJUR_APPLIANCE_TAR=""
 
-eval $(minishift oc-env)
-eval $(minishift docker-env)
+# after running this script, the demo will run w/o internet access
+
+source $DEMO_ROOT/$DEMO_CONFIG_FILE
 
 main() {
 	load_conjur_image
@@ -18,16 +20,6 @@ main() {
 }
 
 load_conjur_image() {
-
-# YOU HAVE TWO OPTIONS:
-
-# Option 1: To load the latest Conjur 4.9 appliance from the Conjur docker hub:
-#	docker pull registry2.itci.conjur.net/conjur-appliance:4.9-stable
-#	docker tag registry2.itci.conjur.net/conjur-appliance:4.9-stable conjur-appliance:4.9-stable
-
-# Option 2: To load the conjur appliance image from a downloaded tarfile, 
-#  edit the line below with the path to the tarfile:
-	CONJUR_APPLIANCE_TAR=~/conjur-install-images/conjur-appliance-4.10.0.0.tar
 	if [[ "$CONJUR_APPLIANCE_TAR" == "" ]]; then
 		echo "Edit load_conjur_image() to point to point to set CONJUR_APPLIANCE_TARFILE w/ the path to your conjur-appliance tarfile."
 		exit

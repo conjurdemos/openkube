@@ -1,23 +1,7 @@
 #!/bin/bash -ex
 
-declare CONJUR_CONTEXT=conjur
-case $ORCHESTRATOR in
-
-  kubernetes)
-	declare APP_CONTEXT=minikube
-	declare KUBECTL=kubectl
-	;;
-
-  openshift)
-	declare APP_CONTEXT=openshift
-	declare KUBECTL=oc
-	oc login -u system:admin
-	;;
-
-  *)
-	printf "Set ORCHESTRATOR env var to either "kubernetes" or "openshift"\n\n"
-	exit -1
-esac
+DEMO_CONFIG_FILE=openkube.conf
+source ../$DEMO_CONFIG_FILE
 
 main() {
 

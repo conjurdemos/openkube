@@ -1,30 +1,7 @@
 #!/bin/bash -e
-
 set -o pipefail
 
-			# context is a namespace in k8s, project in openshift
-declare CONJUR_CONTEXT=conjur
-
-case $ORCHESTRATOR in
-
-  kubernetes)
-	declare KUBECTL=kubectl
-	declare MINIKUBE=minikube
-	eval $(minikube docker-env)
-	;;
-
-  openshift)
-	declare KUBECTL=oc
-	declare MINIKUBE=minishift
-	eval $(minishift oc-env)
-	eval $(minishift docker-env)
-	;;
-
-  *)
-	printf "Set ORCHESTRATOR env var to either "kubernetes" or "openshift"\n\n"
-	exit -1
-
-esac
+source $DEMO_ROOT/$DEMO_CONFIG_FILE
 
 # directory of yaml
 declare CONFIG_DIR=./conjur-service
@@ -61,11 +38,11 @@ startup_conjur_service() {
 	# give containers time to get running
 	echo "Waiting for conjur-master-0 to launch"
 	sleep 5
-  while [[ $($KUBECTL exec conjur-master-0 evoke role) != "blank" ]]; do
-  	echo -n '.'
-  	sleep 5
-  done
-  echo "done"
+	while [[ $($KUBECTL exec conjur-master-0 evoke role) != "blank" ]]; do
+  		echo -n '.'
+  		sleep 5
+	done
+	echo "done"
 }
 
 ##############################
@@ -89,8 +66,8 @@ configure_conjur_cluster() {
 
 	printf "Preparing seed files...\n"
 	# prepare seed files for standbys and followers
-  $KUBECTL exec $MASTER_POD_NAME evoke seed standby > $CONFIG_DIR/standby-seed.tar
-  $KUBECTL exec $MASTER_POD_NAME evoke seed follower $CONJUR_FOLLOWER_DNS_NAME > $CONFIG_DIR/follower-seed.tar
+	$KUBECTL exec $MASTER_POD_NAME evoke seed standby > $CONFIG_DIR/standby-seed.tar
+	$KUBECTL exec $MASTER_POD_NAME evoke seed follower $CONJUR_FOLLOWER_DNS_NAME > $CONFIG_DIR/follower-seed.tar
 
 	# get master IP address for standby config
 	MASTER_POD_IP=$($KUBECTL describe pod $MASTER_POD_NAME | awk '/IP:/ {print $2}')

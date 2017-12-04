@@ -1,11 +1,11 @@
 - !policy
-  id: conjur/authn-k8s/minikube/default
+  id: conjur/authn-k8s/minikube/webapp
   owner: !group /ops
   body:
   - !policy
     id: apps
     annotations:
-      description: Apps and services in Kubernetes "default" namespace.
+      description: Apps and services in Kubernetes "webapp" namespace.
     body:
     - &hosts
       - !host webapp
@@ -15,4 +15,4 @@
       resources: *hosts
       privilege: [ read, authenticate ]
       roles:
-      - !host /conjur/authn-k8s/minikube/default/client
+      - !host /conjur/authn-k8s/minikube/webapp/client

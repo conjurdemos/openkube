@@ -1,22 +1,7 @@
 #!/bin/bash
 set -eo pipefail
 
-declare CONJUR_CONTEXT=conjur
-
-case $ORCHESTRATOR in
-  kubernetes)
-	declare KUBECTL=kubectl
-	eval $(minikube docker-env)
-	;;
-  openshift)
-	declare KUBECTL=oc
-	eval $(minishift oc-env)
-	eval $(minishift docker-env)
-	;;
-  *)
-	printf "Set ORCHESTRATOR env var to either "kubernetes" or "openshift"\n\n"
-	exit -1
-esac
+source $DEMO_ROOT/$DEMO_CONFIG_FILE
 
 # directory of yaml
 declare CONFIG_DIR=./conjur-service
@@ -94,13 +79,13 @@ startup_client() {
 
 ##########################
 print_config() {
-  # get internal/external IP addresses
-  CLUSTER_IP=$($KUBECTL describe svc conjur-master | awk '/IP:/ { print $2; exit}')
-  EXTERNAL_IP=$($KUBECTL describe svc conjur-master | awk '/External IPs:/ { print $3; exit}')
-
-  # inform user of IP addresses 
-  printf "\nInside Kubernetes, you can reach the Conjur master at: conjur-master.%s.svc.cluster.local\n" $CONJUR_CONTEXT 
-  printf "\nOutside the cluster, add this line to /etc/hosts:\n\n\t%s\tconjur-master\n\n" $EXTERNAL_IP  
+        # get internal/external IP addresses
+        EXTERNAL_IP=$($MINIKUBE ip)
+        EXTERNAL_PORT=$($KUBECTL describe svc conjur-master | awk '/NodePort:/ {print $2 " " $3}' | awk '/https/ {print $2}' | awk -F "/" '{ print $1 }')
+                                # inform user of service ingresses
+        printf "\n\n-----\nConjur cluster is ready. Addresses for the Conjur Master service:\n"
+        printf "\nInside the cluster: conjur-master.%s.svc.cluster.local\n" $CONJUR_CONTEXT
+        printf "\nOutside the cluster: DNS hostname: conjur-master, IP:%s, Port:%s\n\n" $EXTERNAL_IP $EXTERNAL_PORT
 }
 
 main "$@"

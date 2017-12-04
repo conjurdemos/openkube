@@ -23,7 +23,7 @@ def authenticate
   authn_url = Conjur.configuration.authn_url
   credentials = begin
     Conjur.configuration.authn_url = "#{Conjur.configuration.appliance_url}/authn"
-    Conjur::API.new_from_key('host/conjur/authn-k8s/minikube/default/client', api_key).credentials
+    Conjur::API.new_from_key('host/conjur/authn-k8s/minikube/webapp/client', api_key).credentials
   ensure
     Conjur.configuration.authn_url = authn_url
   end

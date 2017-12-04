@@ -17,6 +17,7 @@ spec:
     name: pg-audit
   selector:
     app: conjur-master
+  type: LoadBalancer	# forces creation of NodePort for external access
 ---
 apiVersion: v1
 kind: Pod

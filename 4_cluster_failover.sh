@@ -1,6 +1,7 @@
-#!/bin/bash -e
+#!/bin/bash 
+set -eo pipefail
 
-set -o pipefail
+source $DEMO_ROOT/$DEMO_CONFIG_FILE
 
 # Fails over to the most up-to-date, healthy standby
 #  - the current master is assumed unreachable and destroyed
@@ -10,24 +11,6 @@ set -o pipefail
 #  - that new master is promoted 
 #  - a new sync standby is created with the old masters pod
 #  - sychronous replication is re-established
-
-                        # context is a namespace in k8s, project in openshift
-declare CONJUR_CONTEXT=conjur
-
-case $ORCHESTRATOR in
-  kubernetes)
-        declare KUBECTL=kubectl
-        eval $(minikube docker-env)
-        ;;
-  openshift)
-        declare KUBECTL=oc
-        eval $(minishift oc-env)
-        eval $(minishift docker-env)
-        ;;
-  *)
-        printf "Set ORCHESTRATOR env var to either "kubernetes" or "openshift"\n\n"
-        exit -1
-esac
 
 ./etc/set_context.sh $CONJUR_CONTEXT
 
@@ -175,7 +158,7 @@ configure_new_standby() {
 	new_pod=$($KUBECTL get pod -lrole=unset -o jsonpath="{.items[*].metadata.name}")
 
 	# copy seed file, unpack and configure
- 	$KUBECTL cp ./$CONFIG_DIR/standby-seed.tar $new_pod:/tmp/standby-seed.tar
+ 	$KUBECTL cp $DEMO_ROOT/$CONFIG_DIR/standby-seed.tar $new_pod:/tmp/standby-seed.tar
   	$KUBECTL exec -it $new_pod -- bash -c "evoke unpack seed /tmp/standby-seed.tar"
 	$KUBECTL exec -it $new_pod -- evoke configure standby -j /etc/conjur.json -i $master_ip
 	$KUBECTL label --overwrite pod $new_pod role=standby

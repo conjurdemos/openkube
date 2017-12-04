@@ -1,43 +1,24 @@
-#!/bin/bash -ex
-set -o pipefail
+#!/bin/bash
+set -eo pipefail
 
-                        # context is a namespace in k8s, project in openshift
-declare CONJUR_CONTEXT=conjur
-
-case $ORCHESTRATOR in
-  kubernetes)
-        declare KUBECTL=kubectl
-	declare APP_CONTEXT=minikube
-        eval $(minikube docker-env)
-        ;;
-  openshift)
-        declare KUBECTL=oc
-	declare APP_CONTEXT=openshift
-        eval $(minishift oc-env)
-        eval $(minishift docker-env)
-        ;;
-  *)
-        printf "Set ORCHESTRATOR env var to either "kubernetes" or "openshift"\n\n"
-        exit -1
-esac
-
+source $DEMO_ROOT/$DEMO_CONFIG_FILE
 
 main() {
-	../etc/set_context.sh $CONJUR_CONTEXT
-	initialize_conjur
+	$DEMO_ROOT/etc/set_context.sh $CONJUR_CONTEXT
+	initialize_host_conjur_cli
 
-	../etc/set_context.sh $APP_CONTEXT
+	$DEMO_ROOT/etc/set_context.sh $APP_CONTEXT
 	initialize_users
 	build_app
 	scope launch		# launch weave scope
 
 	conjur authn logout
-	echo "Now, you should run the following command in your terminal:"
-	echo "export CONJURRC=$CONJURRC"
+	printf "\n\n-----\nNow, you should run the following command in your terminal:\n\n"
+	printf "\texport CONJURRC=$CONJURRC\n\n"
 }
 
 ##########################
-initialize_conjur() {
+initialize_host_conjur_cli() {
 
 	rm -f conjurrc conjur-dev.pem
 
@@ -49,7 +30,6 @@ initialize_conjur() {
 yes
 END
 	export CONJURRC=$(pwd)/conjurrc
-	#conjur plugin install policy
 	conjur authn login -u admin -p Cyberark1
 	conjur bootstrap
 }

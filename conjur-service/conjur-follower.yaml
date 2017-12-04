@@ -34,5 +34,3 @@ spec:
           name: https
         - containerPort: 5432
           name: pg-main
-        command: [ "/bin/sh", "-c", "--" ]
-        args: [ "trap : TERM INT; sleep infinity & wait" ]
