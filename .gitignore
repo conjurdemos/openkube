@@ -1,3 +1,12 @@
-authn_k8s_scale_demo/build/*.gz
-conjur-service/*.tar
+follower-seed.tar
+standby-seed.tar
+conjurrc
+.conjurrc
+conjur-dev.pem
+conjur-service/conjur-follower.yaml
+conjur_server_build/*.deb
+scale_demo/conjur-dev.pem
+scale_demo/conjurrc
+summon-*.tar.gz
+tmp
 
