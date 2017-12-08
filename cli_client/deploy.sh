@@ -25,7 +25,14 @@ main() {
 ######################
 evokecmd() {
 
-  master_pod=$($KUBECTL get pod -l role=master --no-headers | awk '{ print $1 }')
+  pod_list=$($KUBECTL get pod -l app=conjur-appliance --no-headers | awk '{ print $1 }')
+  for pod_name in $pod_list; do
+	crole=$($KUBECTL exec $pod_name  -- sh -c "evoke role")
+	if [[ $crole == master ]]; then
+  		master_pod=$pod_name
+		break
+	fi
+  done
   interactive=$1
   if [ $interactive = '-i' ]; then
     shift

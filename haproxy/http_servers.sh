@@ -19,7 +19,8 @@ backend b_conjur_master_http
 	external-check command "/root/conjur-health-check.sh"
 CONFIG
 
-pod_list=$(kubectl get pods -lapp=conjur-appliance | awk '/conjur-master/ {print $1}')
+pod_list=$(kubectl get pods -l app=conjur-appliance --no-headers \
+						| awk '{print $1}')
 for pod_name in $pod_list; do
 	pod_ip=$(kubectl describe pod $pod_name | awk '/IP:/ {print $2}')
 	echo -e '\t' server $pod_name $pod_ip:443 check >> $destination_file

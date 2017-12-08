@@ -1,5 +1,5 @@
 ---
 account: dev
 plugins: []
-appliance_url: https://conjur-master:30023/api
+appliance_url: https://conjur-master:30105/api
 cert_file: "/Users/josephhunt/Conjur/openkube/authn_k8s_scale_demo/conjur-dev.pem"

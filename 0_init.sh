@@ -145,6 +145,9 @@ create_contexts() {
 					# addition of this grant was provoked by webapp authenticators inability to mkdir
 			oc adm policy add-scc-to-user anyuid -z default
 		fi
+		MAJOR_VERSION=$(oc version | grep openshift | awk '{print $2}' | awk -F "." '{ print $1}')
+		MINOR_VERSION=$(oc version | grep openshift | awk -F "." '{ print $2}')
+		printf "Running Openshift %s.%s\n" $MAJOR_VERSION $MINOR_VERSION
 		;;
 
 	*) printf "\ncoding error in case statement in $0.\n"

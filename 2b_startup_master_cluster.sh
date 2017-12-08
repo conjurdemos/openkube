@@ -1,13 +1,13 @@
-#!/bin/bash -e
-set -o pipefail
+#!/bin/bash -x
+set -eo pipefail
 
 source $DEMO_ROOT/$DEMO_CONFIG_FILE
 
 # directory of yaml
-declare CONFIG_DIR=./conjur-service
+declare CONFIG_DIR=conjur-service
 
-# initially, master is always pod 0
-declare MASTER_POD_NAME=conjur-master-0
+declare MASTER_POD_NAME=""
+NUM_STANDBYS=""
 declare ADMIN_PASSWORD=Cyberark1
 declare CONJUR_CLUSTER_ACCT=dev
 declare CONJUR_NAMESPACE=conjur
@@ -23,6 +23,7 @@ main() {
 	configure_conjur_cluster
 	start_load_balancer
 	startup_client
+	start_sync_replication
 	print_config
 }
 
@@ -32,13 +33,18 @@ main() {
 startup_conjur_service() {
 	./etc/set_context.sh $CONJUR_CONTEXT
 
-	# start up conjur services from yaml
-	$KUBECTL create -f $CONFIG_DIR/conjur-master-headless.yaml
-
-	# give containers time to get running
-	echo "Waiting for conjur-master-0 to launch"
+			# start up conjur services from yaml
+	$KUBECTL create -f $DEMO_ROOT/$CONFIG_DIR/conjur-master-headless.yaml
+	sleep 2
+		        # get list of the master/standby candidates
+        pod_list=$($KUBECTL get pods -l name=conjur-node --no-headers \
+							| awk '{ print $1 }')
+			# select first pod in list to be master
+	MASTER_POD_NAME=$(echo $pod_list | awk '{print $1}' )
+			# give containers time to get running
+	echo "Waiting for pods to launch"
 	sleep 5
-	while [[ $($KUBECTL exec conjur-master-0 evoke role) != "blank" ]]; do
+	while [[ $($KUBECTL exec $MASTER_POD_NAME evoke role) != "blank" ]]; do
   		echo -n '.'
   		sleep 5
 	done
@@ -51,8 +57,7 @@ startup_conjur_service() {
 configure_conjur_cluster() {
 	./etc/set_context.sh $CONJUR_CONTEXT
 
-	# label pod with role
-	$KUBECTL label --overwrite pod $MASTER_POD_NAME role=master
+        $KUBECTL label --overwrite pod $MASTER_POD_NAME role=master
 
 	printf "Configuring conjur-master %s...\n" $MASTER_POD_NAME
 	# configure Conjur master server using evoke
@@ -73,22 +78,19 @@ configure_conjur_cluster() {
 	MASTER_POD_IP=$($KUBECTL describe pod $MASTER_POD_NAME | awk '/IP:/ {print $2}')
 
 	# get list of the other pods 
-	pod_list=$($KUBECTL get pods -lrole=unset \
-			| awk '/conjur-master/ {print $1}')
+	NUM_STANDBYS=0
+	pod_list=$($KUBECTL get pods -l role=unset --no-headers \
+							| awk '{ print $1 }')
 	for pod_name in $pod_list; do
+		let NUM_STANDBYS=NUM_STANDBYS+1
 		printf "Configuring standby %s...\n" $pod_name
-		# label pod with role
-		$KUBECTL label --overwrite pod $pod_name role=standby
-		# configure standby
+				# label pod with role
+                $KUBECTL label --overwrite pod $pod_name role=standby
 		$KUBECTL cp $CONFIG_DIR/standby-seed.tar $pod_name:/tmp/standby-seed.tar
 		$KUBECTL exec $pod_name evoke unpack seed /tmp/standby-seed.tar
 		$KUBECTL exec $pod_name -- evoke configure standby -j /etc/conjur.json -i $MASTER_POD_IP
 	done
 
-	if [[ "$pod_list" != "" ]]; then
-		printf "Starting synchronous replication...\n"
-		$KUBECTL exec $MASTER_POD_NAME -- bash -c "evoke replication sync"
-	fi
 }
 
 ##########################
@@ -113,14 +115,22 @@ startup_client() {
 }
 
 ##########################
+start_sync_replication() {
+	if [[ $NUM_STANDBYS != 0 ]]; then
+		printf "Starting synchronous replication...\n"
+		$KUBECTL exec $MASTER_POD_NAME -- bash -c "evoke replication sync"
+	fi
+}
+
+##########################
 print_config() {
 	# get internal/external IP addresses
 	EXTERNAL_IP=$($MINIKUBE ip)
 	EXTERNAL_PORT=$($KUBECTL describe svc conjur-master | awk '/NodePort:/ {print $2 " " $3}' | awk '/https/ {print $2}' | awk -F "/" '{ print $1 }')
 				# inform user of service ingresses
 	printf "\n\n-----\nConjur cluster is ready. Addresses for the Conjur Master service:\n"
-	printf "\nInside the cluster: conjur-master.%s.svc.cluster.local\n" $CONJUR_CONTEXT
-	printf "\nOutside the cluster: DNS hostname: conjur-master, IP:%s, Port:%s\n\n" $EXTERNAL_IP $EXTERNAL_PORT
+	printf "\tInside the cluster: conjur-master.%s.svc.cluster.local\n" $CONJUR_CONTEXT
+	printf "\tOutside the cluster: DNS hostname: conjur-master, IP:%s, Port:%s\n\n" $EXTERNAL_IP $EXTERNAL_PORT
 }
 
 main $@

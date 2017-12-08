@@ -1,6 +1,11 @@
 #!/bin/bash 
 set -o pipefail
 
+if [[ "$ORCHESTRATOR" == "" ]]; then
+	printf "\nSet env var ORCHESTRATOR to either 'kubernetes' or 'openshift'.\n\n"
+	exit -1
+fi
+
 source $DEMO_ROOT/$DEMO_CONFIG_FILE
 
 declare CONFIG_DIR=conjur-service
@@ -8,14 +13,20 @@ declare CONFIG_DIR=conjur-service
 #################
 main() {
 	$DEMO_ROOT/etc/set_context.sh $CONJUR_CONTEXT
-	delete_follower_all
-	delete_webapp_all
 	delete_master_all
-	rm $DEMO_ROOT/$CONFIG_DIR/*.tar
 
 	$DEMO_ROOT/etc/set_context.sh $APP_CONTEXT
 	delete_cli_all
+
+	$DEMO_ROOT/etc/set_context.sh $CONJUR_CONTEXT
+	delete_follower_all
+	rm $DEMO_ROOT/$CONFIG_DIR/*.tar
+
+	$DEMO_ROOT/etc/set_context.sh $APP_CONTEXT
 	delete_apps
+
+	$DEMO_ROOT/etc/set_context.sh $CONJUR_CONTEXT
+
 	delete_contexts
 	printf "\n-----\nConjur environment purged, resources still running:\n\n"
 	$KUBECTL get all --all-namespaces
@@ -32,6 +43,8 @@ delete_webapp_all() {
 delete_master_all() {
 	$KUBECTL delete --ignore-not-found=true -f $DEMO_ROOT/$CONFIG_DIR/conjur-master-solo.yaml
 	$KUBECTL delete --ignore-not-found=true -f $DEMO_ROOT/$CONFIG_DIR/conjur-master-headless.yaml
+	$KUBECTL delete --ignore-not-found=true -f $DEMO_ROOT/$CONFIG_DIR/conjur-master-headless-nostateful.yaml
+	$KUBECTL delete pods -l app=conjur-appliance
 	$KUBECTL delete --ignore-not-found=true -f $DEMO_ROOT/$CONFIG_DIR/haproxy-conjur-master.yaml
 }
 
@@ -48,7 +61,7 @@ delete_cli_all() {
 
 #################
 delete_apps() {
-	pushd authn_k8s_scale_demo && ./6_delete_deployment.sh && popd
+	pushd $DEMO_ROOT/authn_k8s_scale_demo && ./6_delete_deployment.sh && popd
 }
 
 #################
