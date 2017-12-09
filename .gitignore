@@ -1,7 +1,7 @@
-follower-seed.tar
-standby-seed.tar
-conjur-service/conjur-follower.yaml
-conjur_server_build/*.deb
+*.pem
+conjurrc
+.conjurrc
+*-seed.tar
+*.deb
 summon-*.tar.gz
 tmp
-
