@@ -34,7 +34,7 @@ create_demo_config_file() {
 
   case $ORCHESTRATOR in
     kubernetes)
-	echo "export ORCHESTATOR=kubernetes" >> $DEMO_CONFIG_FILE
+	echo "export ORCHESTRATOR=kubernetes" >> $DEMO_CONFIG_FILE
 	echo "export MINIKUBE=minikube" >> $DEMO_CONFIG_FILE
 
 	echo "export KUBECTL=kubectl" >> $DEMO_CONFIG_FILE
@@ -44,7 +44,7 @@ create_demo_config_file() {
 	;;
 
     openshift)
-	echo "export ORCHESTATOR=openshift" >> $DEMO_CONFIG_FILE
+	echo "export ORCHESTRATOR=openshift" >> $DEMO_CONFIG_FILE
 	echo "export MINIKUBE=minishift" >> $DEMO_CONFIG_FILE
 
 	echo "export KUBECTL=oc" >> $DEMO_CONFIG_FILE
