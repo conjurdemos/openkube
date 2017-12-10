@@ -1,7 +1,7 @@
+openkube.conf
 *.pem
 conjurrc
 .conjurrc
 *-seed.tar
 *.deb
-summon-*.tar.gz
 tmp
