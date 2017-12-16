@@ -2,25 +2,25 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: conjur-master-headless
+  name: conjur-stateful-subcluster
 spec:
   ports:
   - port: 443
   clusterIP: None
   selector:
-    app: conjur-master
+    app: conjur-node
 ---
 apiVersion: apps/v1beta1
 kind: StatefulSet
 metadata:
-  name: conjur-master
+  name: conjur-stateful-node
 spec:
-  serviceName: conjur-master-headless
+  serviceName: conjur-stateful-subcluster
   replicas: 3
   template:
     metadata:
       labels:
-        app: conjur-appliance
+        app: conjur-node
         role: unset        # set to master or standby when configured
     spec:
       containers:

@@ -4,4 +4,5 @@ conjurrc
 .conjurrc
 *-seed.tar
 *.deb
+*.tar.gz
 tmp

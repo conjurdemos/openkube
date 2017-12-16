@@ -16,9 +16,9 @@ main() {
 	build_cli_client_image
 	build_demo_app_image
 	install_weavescope
-	./time_sync.sh
 }
 
+##########################
 load_conjur_image() {
 	if [[ "$CONJUR_APPLIANCE_TAR" == "" ]]; then
 		echo "Edit load_conjur_image() to point to point to set CONJUR_APPLIANCE_TARFILE w/ the path to your conjur-appliance tarfile."
@@ -33,41 +33,45 @@ tag_conjur_image() {
 	docker tag $IMAGE_NAME conjur-appliance:4.9-stable
 }
 
+##########################
 build_appliance_image() {
 # Assumptions:
 # - conjur-appliance:4.9-stable exists in the Minikube Docker engine.
 # - You have the artifact "conjur-authn-k8s_${AUTHN_K8S_VERSION}_amd64.deb" in the conjur_server_build directory.
 
-	pushd ./conjur_server_build
+	pushd $DEMO_ROOT/build/conjur_server_build
 	./build.sh
 	popd
 }
 
+##########################
 build_haproxy_image() {
-	pushd ./haproxy
+	pushd $DEMO_ROOT/build/haproxy
 	./build.sh
 	popd
 }
 
+##########################
 build_cli_client_image() {
-	pushd ./cli_client/build
+	pushd $DEMO_ROOT/build/cli_client/build
 	./build.sh
 	popd
 }
 
+##########################
 build_demo_app_image() {
-        pushd authn_k8s_scale_demo/build
+        pushd $DEMO_ROOT/webapp_demo/build
         ./build.sh
         popd
 }
 
+##########################
 install_weavescope() {
         # setup weave scope for visualization
         weave_image=$(docker images | awk '/weave/ {print $1}')
         if [[ "$weave_image" == "" ]]; then
                 sudo curl -L git.io/scope -o /usr/local/bin/scope
 		chmod a+x /usr/local/bin/scope
-		scope launch
         fi
 }
 

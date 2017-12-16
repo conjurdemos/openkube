@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash 
 set -eo pipefail
 
 # general utility for switching projects/namespaces/contexts in k8s & openshift

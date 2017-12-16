@@ -1,17 +1,20 @@
 #!/bin/bash
 
-source $DEMO_ROOT/$DEMO_CONFIG
+source $DEMO_ROOT/$DEMO_CONFIG_FILE
 
-printf "\n\nCluster state:\n----------------\n"
+$DEMO_ROOT/etc/set_context.sh $APP_CONTEXT
+printf "\n\n%s context state:\n----------------\n" $APP_CONTEXT
+$KUBECTL get all
+
+$DEMO_ROOT/etc/set_context.sh $CONJUR_CONTEXT
+printf "\n\n%s context state:\n----------------\n" $CONJUR_CONTEXT
 $KUBECTL get all
 
 printf "\n\nLoad balancer config:\n----------------\n"
 $KUBECTL exec haproxy-conjur-master cat /usr/local/etc/haproxy/haproxy.cfg
-$KUBECTL exec haproxy-conjur-master cat /usr/local/etc/haproxy/http_servers.cfg
-$KUBECTL exec haproxy-conjur-master cat /usr/local/etc/haproxy/pg_servers.cfg
 
 printf "\n\nStateful node info:\n----------------\n"
-cont_list=$($KUBECTL get pods -l name=conjur-node --no-headers \
+cont_list=$($KUBECTL get pods -l app=conjur-node --no-headers \
 						| awk '{print $1}')
 for cname in $cont_list; do
 	crole=$($KUBECTL describe pod $cname | grep "role=" \

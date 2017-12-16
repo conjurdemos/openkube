@@ -2,6 +2,7 @@
 set -eo pipefail
 
 source $DEMO_ROOT/$DEMO_CONFIG_FILE
+declare CONFIG_DIR=conjur-service
 
 # Fails over to the most up-to-date, healthy standby
 #  - the current master is assumed unreachable and destroyed
@@ -14,7 +15,6 @@ source $DEMO_ROOT/$DEMO_CONFIG_FILE
 
 ./etc/set_context.sh $CONJUR_CONTEXT
 
-declare CONFIG_DIR=conjur-service
 
 main() {
 	delete_current_master
@@ -24,6 +24,7 @@ main() {
 	rebase_other_standbys
 	promote_candidate
 	configure_new_standby
+	update_ha_proxy
 }
 
 ##########################
@@ -36,11 +37,21 @@ delete_current_master() {
 	OLD_MASTER_POD=$($KUBECTL get pod -l role=master -o jsonpath="{.items[*].metadata.name}")
 	if [[ "$OLD_MASTER_POD" = "" ]]; then
 		echo 'No active master!'
-		exit 1
+	else
+			# replace old master w/ unconfigured pod
+		$KUBECTL get pod $OLD_MASTER_POD -o yaml | kubectl replace --force -f -
+		$KUBECTL label --overwrite pod $OLD_MASTER_POD role=unset
 	fi
-	# replace old master w/ unconfigured pod
-	$KUBECTL get pod $OLD_MASTER_POD -o yaml | kubectl replace --force -f -
-	$KUBECTL label --overwrite pod $OLD_MASTER_POD role=unset
+			# 
+	if [[ $ORCHESTRATOR == openshift ]]; then
+			# wait for master pod to terminate before proceeding
+		while : ; do
+			if [[ "$($KUBECTL get pod $OLD_MASTER_POD)" == "" ]]; then
+				break
+			fi
+			sleep 2
+		done
+	fi
 }
 
 #############################
@@ -49,7 +60,8 @@ delete_current_master() {
 
 stop_all_replication() {
 	printf "Stopping replication...\n"
-	pod_list=($($KUBECTL get pods -lrole=standby -o jsonpath="{.items[*].metadata.name}"))
+	pod_list=$($KUBECTL get pods -l role=standby --no-headers \
+						| awk '{ print $1 }')
 	for pod_name in $pod_list; do
  		$KUBECTL exec -t $pod_name -- evoke replication stop
 	done
@@ -67,7 +79,7 @@ stop_all_replication() {
 identify_standby_to_promote() {
 	printf "Identifying standby to promote to master...\n"
 	# get list of standby pods
-	pod_list=($($KUBECTL get pods -lrole=standby -o jsonpath="{.items[*].metadata.name}"))
+	pod_list=($($KUBECTL get pods -l role=standby -o jsonpath="{.items[*].metadata.name}"))
 	# find standby w/ most replication bytes
 	most_repl_bytes=0
 
@@ -97,11 +109,11 @@ identify_standby_to_promote() {
 verify_master_candidate() {
 	printf "Verifying candidate as viable master...\n"
 	# get candidate pod IP address
-	candidate_pod=$($KUBECTL get pods -lrole=candidate -o jsonpath="{.items[*].metadata.name}")
+	candidate_pod=$($KUBECTL get pods -l role=candidate -o jsonpath="{.items[*].metadata.name}")
 	candidate_ip=$($KUBECTL describe pod $candidate_pod | awk '/IP:/ { print $2 }')
 	# get list of standby pods
-	pod_list=($($KUBECTL get pods -lrole=standby -o jsonpath="{.items[*].metadata.name}"))
-
+	pod_list=$($KUBECTL get pods -l role=standby --no-headers \
+						| awk '{print $1}')
 	for pod_name in $pod_list; do
 		# verify new master is worthy
 		verify_message=$($KUBECTL exec -t $pod_name -- evoke replication rebase --dry-run $candidate_ip)
@@ -117,10 +129,10 @@ verify_master_candidate() {
 rebase_other_standbys() {
 	printf "Rebasing other standbys to new master...\n"
 	# get candidate pod IP address
-	candidate_pod=$($KUBECTL get pods -lrole=candidate -o jsonpath="{.items[*].metadata.name}")
+	candidate_pod=$($KUBECTL get pods -l role=candidate -o jsonpath="{.items[*].metadata.name}")
 	candidate_ip=$($KUBECTL describe pod $candidate_pod | awk '/IP:/ { print $2 }')
 	# get list of standby pods
-	pod_list=($($KUBECTL get pods -lrole=standby -o jsonpath="{.items[*].metadata.name}"))
+	pod_list=($($KUBECTL get pods -l role=standby -o jsonpath="{.items[*].metadata.name}"))
 
 	# rebase remaining standbys to new master
 	for pod_name in $pod_list; do
@@ -136,7 +148,7 @@ rebase_other_standbys() {
 promote_candidate() {
 	printf "Promoting candidate to master...\n"
 	# get candidate pod IP address
-	candidate_pod=$($KUBECTL get pods -lrole=candidate -o jsonpath="{.items[*].metadata.name}")
+	candidate_pod=$($KUBECTL get pods -l role=candidate -o jsonpath="{.items[*].metadata.name}")
 	# promote new master
 	$KUBECTL exec -t $candidate_pod -- evoke role promote
 	# update label
@@ -151,7 +163,7 @@ promote_candidate() {
 configure_new_standby() {
 	printf "Configuring former master pod as standby...\n"
 	# get master pod IP address
-	master_pod=$($KUBECTL get pods -lrole=master -o jsonpath="{.items[*].metadata.name}")
+	master_pod=$($KUBECTL get pods -l role=master -o jsonpath="{.items[*].metadata.name}")
 	master_ip=$($KUBECTL describe pod $master_pod | awk '/IP:/ { print $2 }')
 
 	# make sure replaced master pod is running
@@ -165,6 +177,14 @@ configure_new_standby() {
 
 	# turn on sync replication
 	$KUBECTL exec -it $master_pod -- bash -c "evoke replication sync"
+}
+
+###################
+update_ha_proxy() {
+	if [[ $ORCHESTRATOR == openshift ]]; then
+			# update load balancer config
+	        pushd $DEMO_ROOT/etc && ./update_haproxy.sh haproxy-conjur-master && popd
+	fi
 }
 
 main $@

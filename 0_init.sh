@@ -18,8 +18,45 @@ main() {
   create_demo_config_file
   source ./$DEMO_CONFIG_FILE
   create_contexts
-  printf "\n\n-----\nNow execute this command to setup your demo environment:\n"
-  printf "\n\tsource ./%s\n\n" $DEMO_CONFIG_FILE
+}
+
+##############################
+startup_env() {
+  case $ORCHESTRATOR in
+
+	kubernetes)
+		KUBECONFIG=~/.kube/config
+		if [[ "$(minikube status | awk '/minikube:/ {print $2}')" != "Running" ]]; then
+			minikube start --memory 8192
+			if [[ ! -f $KUBECONFIG.bak ]]; then
+				cp $KUBECONFIG $KUBECONFIG.bak
+			fi
+		fi
+				# restore initial client state
+		cp $KUBECONFIG.bak $KUBECONFIG
+		eval $(minikube docker-env)
+		;;
+
+
+	openshift)
+		KUBECONFIG=~/.minishift/machines/minishift_kubeconfig
+		if [[ "$(minishift status | awk '/Minishift:/ {print $2}')" != "Running" ]]; then
+			minishift start --memory 8192 --vm-driver virtualbox --show-libmachine-logs
+			if [[ ! -f $KUBECONFIG.bak ]]; then
+				cp $KUBECONFIG $KUBECONFIG.bak
+			fi
+		fi  
+				# restore initial client state
+		cp $KUBECONFIG.bak $KUBECONFIG
+			  # set path to the minishift CLI and use the minishift docker environment
+		eval $(minishift oc-env)
+		eval $(minishift docker-env)
+		;;
+
+	*)
+		printf "\ncoding error in case stmt in $0.\n\n"
+		exit -1
+  esac
 }
 
 #############################
@@ -39,7 +76,7 @@ create_demo_config_file() {
 
 	echo "export KUBECTL=kubectl" >> $DEMO_CONFIG_FILE
 						# default cluster config file
-	echo "export KUBECONFIG=~/.kube/config" >> $DEMO_CONFIG_FILE
+	echo "export KUBECONFIG=$KUBECONFIG" >> $DEMO_CONFIG_FILE
 	minikube docker-env >> $DEMO_CONFIG_FILE
 	;;
 
@@ -49,7 +86,7 @@ create_demo_config_file() {
 
 	echo "export KUBECTL=oc" >> $DEMO_CONFIG_FILE
 						# default cluster config file
-	echo "export KUBECONFIG=~/.minishift/machines/minishift_kubeconfig" >> $DEMO_CONFIG_FILE
+	echo "export KUBECONFIG=$KUBECONFIG" >> $DEMO_CONFIG_FILE
 	minishift oc-env >> $DEMO_CONFIG_FILE
 	minishift docker-env >> $DEMO_CONFIG_FILE
 	;;
@@ -60,34 +97,6 @@ create_demo_config_file() {
   esac
 }
 
-
-##############################
-startup_env() {
-  case $ORCHESTRATOR in
-
-	kubernetes)
-		if [[ "$(minikube status | awk '/minikube:/ {print $2}')" != "Running" ]]; then
-			minikube start --memory 8192 
-		fi  
-		eval $(minikube docker-env)
-		;;
-
-
-	openshift)
-		if [[ "$(minishift status | awk '/Minishift:/ {print $2}')" != "Running" ]]; then
-			minishift start --memory 8192 --vm-driver virtualbox --show-libmachine-logs  
-		fi  
-			  # set path to the minishift CLI and use the minishift docker environment
-		eval $(minishift oc-env)
-		eval $(minishift docker-env)
-		;;
-
-	*)
-		printf "\ncoding error in case stmt in $0.\n\n"
-		exit -1
-  esac
-}
-
 ##############################
 create_contexts() {
 
@@ -95,7 +104,7 @@ create_contexts() {
 
 	kubernetes)
 							# create context for apps
-		if kubectl get namespace | grep -w $APP_CONTEXT > /dev/null; then
+		if kubectl get namespace | grep -w $APP_CONTEXT >> /dev/null; then
 		    echo "Namespace '$APP_CONTEXT' exists. I wont create it."
 		else
 		    kubectl create namespace $APP_CONTEXT
@@ -103,7 +112,7 @@ create_contexts() {
 		kubectl config set-context $APP_CONTEXT --namespace=$APP_CONTEXT --cluster=minikube --user=minikube
 
 							# create context for conjur
-		if kubectl get namespace | grep -w $CONJUR_CONTEXT > /dev/null; then
+		if kubectl get namespace | grep -w $CONJUR_CONTEXT >> /dev/null; then
 		    echo "Namespace '$CONJUR_CONTEXT' exists. I wont create it."
 		else
 		    kubectl create namespace $CONJUR_CONTEXT
@@ -120,14 +129,15 @@ create_contexts() {
 		else
 			oc new-project $CONJUR_CONTEXT --display-name="Conjur Openshift" --description="Demonstration of Conjur running in Openshift."
 			sleep 2
-					# add anyuid security context constraint to default service account
-					# this allows processes to run as root within containers in this project/namespace only
-					# addition of this privilege grant was provoked by inability to unpack Conjur seed files
+				# add anyuid security context constraint to default service account
+				# this allows processes to run as root within containers in this project/namespace only
+				# addition of this privilege grant was provoked by inability to unpack Conjur seed files
 			oc adm policy add-scc-to-user anyuid -z default
 
-					# HAproxy needs to be able to list master/standby pods to update its config
+				# HAproxy needs to be able to list master/standby pods to update its config
 			oc adm policy add-cluster-role-to-user cluster-reader system:serviceaccount:$CONJUR_CONTEXT:default
-
+				# give user "developer" edit role on project
+			oc policy add-role-to-user edit developer
 					# below is apparently a better, more precisely scoped privilege grant practice 
 					# using a specific service account to be referenced by deployment config files.
 #			oc create serviceaccount useroot
@@ -139,11 +149,14 @@ create_contexts() {
   		if oc projects | grep -w $APP_CONTEXT > /dev/null; then
 			echo "Project '$APP_CONTEXT' exists, not going to create it."
 		else
-			oc new-project $APP_CONTEXT --display-name="Conjur webapp application" --description="For demonstration of Conjur container authentication and secrets retrieval."
+			oc new-project $APP_CONTEXT --display-name="Conjur Webapp Demo" --description="For demonstration of Conjur container authentication and secrets retrieval."
 					# add anyuid security context constraint to default service account
 					# this allows processes to run as root within containers in this project/namespace only
 					# addition of this grant was provoked by webapp authenticators inability to mkdir
 			oc adm policy add-scc-to-user anyuid -z default
+
+				# give user "developer" edit role on project
+			oc policy add-role-to-user edit developer
 		fi
 		MAJOR_VERSION=$(oc version | grep openshift | awk '{print $2}' | awk -F "." '{ print $1}')
 		MINOR_VERSION=$(oc version | grep openshift | awk -F "." '{ print $2}')

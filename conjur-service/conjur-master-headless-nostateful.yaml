@@ -1,17 +1,18 @@
+---
 apiVersion: v1
 kind: DeploymentConfig
 metadata:
   labels:
-    app: conjur-appliance
-  name: conjur-node
+    app: conjur-stateful-subcluster
+  name: conjur-stateful-subcluster
 spec:
   replicas: 3
   selector:
-    app: conjur-appliance
+    app: conjur-node
   template:
     metadata:
       labels:
-        app: conjur-appliance
+        app: conjur-node
         name: conjur-node
         role: unset        # set to master or standby when configured
     spec:
