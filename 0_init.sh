@@ -18,6 +18,8 @@ main() {
   create_demo_config_file
   source ./$DEMO_CONFIG_FILE
   create_contexts
+  printf "Now set DEMO_ROOT to the current directory and DEMO_CONFIG_FILE to openkube.conf\n"
+  printf "\n\texport DEMO_ROOT=$(pwd)\n\texport DEMO_CONFIG_FILE=openkube.conf\n\n"
 }
 
 ##############################

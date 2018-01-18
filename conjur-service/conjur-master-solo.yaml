@@ -4,7 +4,7 @@ kind: Service
 metadata:
   name: conjur-master
   labels:
-    app: conjur-master
+    app: conjur-node
 spec:
   ports:
   - port: 443
@@ -25,7 +25,7 @@ metadata:
 metadata:
   name: conjur-master
   labels:
-    app: conjur-master
+    app: conjur-node
     role: master
 spec:
   containers:

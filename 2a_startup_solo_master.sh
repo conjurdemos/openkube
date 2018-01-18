@@ -70,7 +70,7 @@ configure_master() {
 startup_client() {
   echo "Starting up the client Pod"
 
-  pushd cli_client
+  pushd $DEMO_ROOT/build/cli_client
   ./deploy.sh
   popd
 

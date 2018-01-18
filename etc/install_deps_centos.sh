@@ -8,11 +8,10 @@ main() {
 	install_docker
 	install_vbox
 	install_jq
+	install_minikube
 	install_minishift
-	install_openshift_cli
 	install_kubectl
 	install_conjur_cli
-	start_minishift
 	configure_env
 }
 
@@ -43,6 +42,13 @@ install_jq() {
 	sudo mv jq-linux64 /usr/local/bin/jq
 }
 
+install_minikube() {
+	echo "Installing Minikube..."
+	curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 
+	chmod +x minikube 
+	sudo mv minikube /usr/local/bin/
+}
+
 install_kubectl() {
 	echo "Installing kubectl..."
 	curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
@@ -52,14 +58,13 @@ install_kubectl() {
 
 install_minishift() {
 	echo "Installing Minishift..."
-	printf "\n\n NOT IMPLEMENTED YET!\n\n"
-#	chmod +x minishift 
-#	sudo mv minishift /usr/local/bin/
-}
-
-install_minishift_cli() {
-	echo "Installing Minishift CLI..."
-	printf "\n\n NOT IMPLEMENTED YET!\n\n"
+	curl -LO https://github.com/minishift/minishift/releases/download/v1.10.0/minishift-1.10.0-linux-amd64.tgz
+	tar xvzf minishift-1.10.0-linux-amd64.tgz
+	pushd minishift-1.10.0-linux-amd64/
+	chmod +x minishift
+	sudo mv minishift /usr/local/bin/
+	popd
+	rm -rf minishift-1.10.0-linux-amd64/
 }
 
 install_conjur_cli() {
@@ -68,26 +73,5 @@ install_conjur_cli() {
   && rm conjur.rpm
 }
 
-start_minishift() {
-	minishift config set memory $MINIKUBE_VM_RAM
-	minishift start --vm-driver virtualbox
-}
-
-configure_env() {
-	echo "Configuring environment..."
-	sudo chmod a+w /etc/bashrc
-	sudo echo PATH=\$PATH:/usr/local/bin >> /etc/bashrc
-	sudo chmod go-w /etc/bashrc
-	. ~/.bashrc
-                        # add conjur master as alias for mk
-        sudo chmod a+w /etc/hosts
-        mk_ip=$(minishift ip)
-        echo "$mk_ip    conjur-master" >> /etc/hosts
-        sudo chmod go-w /etc/hosts
-
-	echo "There is no docker daemon started, you will use the"
-	echo "minishift docker environment. issue this command:" 
-	echo "	eval $(minishift docker-env)"
-}
-
+ minishift.tgz https://github.com/minishift/minishift/releases/download/v1.10.0/minishift-1.10.0-linux-amd64.tgz
 main $@

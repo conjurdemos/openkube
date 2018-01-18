@@ -34,7 +34,7 @@ main() {
 	$DEMO_ROOT/etc/set_context.sh $APP_CONTEXT
 	delete_apps
 	$DEMO_ROOT/etc/set_context.sh $CONJUR_CONTEXT
-
+exit
 	delete_contexts
 	printf "\n-----\nConjur environment purged, resources still running:\n\n"
 	$KUBECTL get all --all-namespaces
