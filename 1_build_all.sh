@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 set -eo pipefail
 
 # Edit the line below with the path to the Conjur appliance image tarfile
@@ -9,7 +9,9 @@ CONJUR_APPLIANCE_TAR=~/conjur-install-images/conjur-appliance-4.9.11.0.tar
 source $DEMO_ROOT/$DEMO_CONFIG_FILE
 
 main() {
-	load_conjur_image
+	if [[ ! "$SKIP_LOAD_IMAGE" == "true" ]]; then
+		load_conjur_image
+	fi
 	tag_conjur_image
 	build_appliance_image	# adds authn_k8s service to appliance
 	build_haproxy_image
