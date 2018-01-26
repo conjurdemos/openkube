@@ -6,6 +6,8 @@ RUN curl -o conjur.deb -L https://github.com/conjurinc/cli-ruby/releases/downloa
   && dpkg -i conjur.deb \
   && rm conjur.deb
 
+RUN /opt/conjur/embedded/bin/gem install sinatra
+
 RUN mkdir -p /usr/local/lib/summon
 
 WORKDIR /tmp/

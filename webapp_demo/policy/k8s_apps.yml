@@ -7,12 +7,14 @@
     annotations:
       description: Apps and services in Kubernetes "webapp" namespace.
     body:
-    - &hosts
-      - !host webapp
+    - &authorized-hosts
+      - !host
+        id: webapp
+        annotations:
+          kubernetes/dns-altnames: webapp.default.svc.cluster.local
+
       - !host webapp-summon
 
-    - !permit
-      resources: *hosts
-      privilege: [ read, authenticate ]
-      roles:
-      - !host /conjur/authn-k8s/minikube/webapp/client
+    - !grant
+      role: !group /conjur/authn-k8s/minikube/webapp/clients
+      members: *authorized-hosts

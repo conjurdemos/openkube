@@ -13,13 +13,10 @@ main() {
 	scope launch		# launch weave scope
 
 	conjur authn logout
-	printf "\n\n-----\nNow, you should run the following command in your terminal:\n\n"
-	printf "\texport CONJURRC=$CONJURRC\n\n"
 }
 
 ##########################
 initialize_host_conjur_cli() {
-
 	rm -f conjurrc conjur-dev.pem
 
         # get external IP addresses
@@ -30,6 +27,7 @@ initialize_host_conjur_cli() {
 yes
 END
 	export CONJURRC=$(pwd)/conjurrc
+	echo "export CONJURRC=$(pwd)/conjurrc" >> $DEMO_ROOT/$DEMO_CONFIG_FILE
 	conjur authn login -u admin -p Cyberark1
 	conjur bootstrap
 }
