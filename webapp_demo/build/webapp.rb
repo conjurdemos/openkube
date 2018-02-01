@@ -54,15 +54,9 @@ class WebappServer < Sinatra::Base
   end
 end
 
-CERT_PATH = '/etc/conjur/ssl'
-
 webrick_options = {
-  :Port               => 443,
+  :Port               => 80,
   :Logger             => WEBrick::Log::new($stderr, WEBrick::Log::DEBUG),
-  :SSLEnable          => true,
-  :SSLVerifyClient    => OpenSSL::SSL::VERIFY_NONE,
-  :SSLCertificate     => OpenSSL::X509::Certificate.new(  File.open(File.join(CERT_PATH, "client.pem")).read),
-  :SSLPrivateKey      => OpenSSL::PKey::RSA.new(          File.open(File.join(CERT_PATH, "client.key")).read),
   :app                => WebappServer
 }
 

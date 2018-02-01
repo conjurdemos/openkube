@@ -8,3 +8,6 @@ $KUBECTL delete --ignore-not-found=true -f webapp.yaml
 $KUBECTL delete --ignore-not-found=true -f webapp_dev.yaml
 $KUBECTL delete --ignore-not-found=true -f webapp-summon.yaml
 $KUBECTL delete --ignore-not-found=true configmap webapp
+
+rm conjurrc
+rm conjur-dev.pem

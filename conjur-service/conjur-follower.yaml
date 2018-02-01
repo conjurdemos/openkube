@@ -19,7 +19,7 @@ kind: Deployment
 metadata:
   name: conjur-follower
 spec:
-  replicas: 2
+  replicas: 1
   template:
     metadata:
       labels:

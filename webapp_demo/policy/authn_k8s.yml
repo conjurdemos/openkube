@@ -1,10 +1,8 @@
 - !policy
-  id: conjur/authn-k8s/minikube/webapp
+  id: conjur/authn-k8s/minikube
   owner: !group /ops
   body:
   - !webservice
-    annotations:
-      kubernetes/namespace: webapp
 
   - !policy
     id: ca

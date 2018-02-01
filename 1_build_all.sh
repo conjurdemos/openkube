@@ -9,10 +9,10 @@ CONJUR_APPLIANCE_TAR=~/conjur-install-images/conjur-appliance-4.9.11.0.tar
 source $DEMO_ROOT/$DEMO_CONFIG_FILE
 
 main() {
-	if [[ ! "$SKIP_LOAD_IMAGE" == "true" ]]; then
+	if [[ ! "$SKIP_LOAD_AND_TAG_IMAGE" == "true" ]]; then
 		load_conjur_image
+		tag_conjur_image
 	fi
-	tag_conjur_image
 	build_appliance_image	# adds authn_k8s service to appliance
 	build_haproxy_image
 	build_cli_client_image
@@ -30,7 +30,7 @@ load_conjur_image() {
 }
 
 tag_conjur_image() {
-			# tags image regardless if it was loaded or pulled
+	# tags image regardless if it was loaded or pulled
 	IMAGE_NAME=$(docker images | awk '/conjur-appliance/ { print $1":"$2; exit}')
 	docker tag $IMAGE_NAME conjur-appliance:4.9-stable
 }

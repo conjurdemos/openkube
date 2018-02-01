@@ -1,5 +1,5 @@
 - !policy
-  id: conjur/authn-k8s/minikube/webapp
+  id: conjur/authn-k8s/minikube
   owner: !group /ops
   body:
   - !policy
@@ -9,12 +9,21 @@
     body:
     - &authorized-hosts
       - !host
-        id: webapp
+        id: webapp/deployment/webapp
         annotations:
-          kubernetes/dns-altnames: webapp.default.svc.cluster.local
+          kubernetes/dns-altnames: webapp.webapp.svc.cluster.local
+          kubernetes/authentication-container-name: webapp-authenticator
 
-      - !host webapp-summon
+      - !host
+        id: webapp/deployment/webapp-summon
+        annotations:
+          kubernetes/authentication-container-name: webapp-authenticator
+
+      - !host
+        id: webapp/pod/webapp-dev
+        annotations:
+          kubernetes/authentication-container-name: webapp
 
     - !grant
-      role: !group /conjur/authn-k8s/minikube/webapp/clients
+      role: !group /conjur/authn-k8s/minikube/clients
       members: *authorized-hosts

@@ -2,26 +2,21 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: webapp
+  name: webapp-dev
 spec:
-  volumes:
-    - name: conjur-access-token
-      emptyDir:
-        medium: Memory
-
   containers:
-  - name: webapp-authenticator
+  - name: webapp
     image: webapp:local
     command: [ sleep, infinity ]
     env:
     - name: CONJUR_APPLIANCE_URL
       value: https://conjur-follower.conjur.svc.cluster.local/api
     - name: CONJUR_AUTHN_URL
-      value: https://conjur-follower.conjur.svc.cluster.local/api/authn-k8s/minikube/webapp
+      value: https://conjur-follower.conjur.svc.cluster.local/api/authn-k8s/minikube
     - name: CONJUR_ACCOUNT
       value: dev
     - name: CONJUR_AUTHN_LOGIN
-      value: webapp
+      value: webapp/pod/webapp
     - name: CONJUR_MAJOR_VERSION
       value: "4"
     - name: CONJUR_SSL_CERTIFICATE
@@ -29,6 +24,3 @@ spec:
         configMapKeyRef:
           name: webapp
           key: ssl_certificate
-    volumeMounts:
-    - mountPath: /run/conjur
-      name: conjur-access-token

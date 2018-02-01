@@ -1,16 +1,8 @@
-#!/bin/bash  -x
+#!/bin/bash
 set -eo pipefail
 source $DEMO_ROOT/$DEMO_CONFIG_FILE
 
-$DEMO_ROOT/etc/set_context.sh $CONJUR_CONTEXT
-
-conjur authn logout >> /dev/null
-conjur authn login
-
-source ./evokecmd.sh
-
-echo Grabbing the conjur.pem
-ssl_certificate=$(evokecmd cat /opt/conjur/etc/ssl/ca.pem)
+ssl_certificate=$(cat conjur-dev.pem)
 
 $DEMO_ROOT/etc/set_context.sh $APP_CONTEXT
 
@@ -23,3 +15,4 @@ $KUBECTL create configmap webapp \
 
 $KUBECTL create -f webapp.yaml
 $KUBECTL create -f webapp-summon.yaml
+$KUBECTL create -f webapp_dev.yaml

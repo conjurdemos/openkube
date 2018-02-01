@@ -17,15 +17,20 @@ main() {
 
 ##########################
 initialize_host_conjur_cli() {
-	rm -f conjurrc conjur-dev.pem
+	master_pod_name=$($KUBECTL get pods -l app=conjur-node -l role=master --no-headers | awk '{ print $1 }')
+	kubectl cp "$master_pod_name:/opt/conjur/etc/ssl/ca.pem" ./conjur-dev.pem
 
-        # get external IP addresses
-        EXTERNAL_PORT=$($KUBECTL describe svc conjur-master | awk '/NodePort:/ {print $2 " " $3}' | awk '/https/ {print $2}' | awk -F "/" '{ print $1 }')
-	CONJUR_MASTER=conjur-master:$EXTERNAL_PORT
+	# get external IP addresses
+	EXTERNAL_PORT=$($KUBECTL describe svc conjur-master | awk '/NodePort:/ {print $2 " " $3}' | awk '/https/ {print $2}' | awk -F "/" '{ print $1 }')
+	CONJUR_MASTER=
 
-	conjur init -h $CONJUR_MASTER -f conjurrc << END
-yes
-END
+	cat << CONJURRC > conjurrc
+appliance_url: https://conjur-master:$EXTERNAL_PORT/api
+plugins: [ policy ]
+account: dev
+cert_file: $PWD/conjur-dev.pem
+CONJURRC
+
 	export CONJURRC=$(pwd)/conjurrc
 	echo "export CONJURRC=$(pwd)/conjurrc" >> $DEMO_ROOT/$DEMO_CONFIG_FILE
 	conjur authn login -u admin -p Cyberark1
