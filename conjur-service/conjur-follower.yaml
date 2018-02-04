@@ -18,6 +18,7 @@ spec:
 # for older Openshift versions
 #apiVersion: v1
 #kind: DeploymentConfig
+##
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
