@@ -2,7 +2,7 @@
 set -eo pipefail
 
 # Edit the line below with the path to the Conjur appliance image tarfile
-CONJUR_APPLIANCE_TAR=~/conjur-install-images/conjur-appliance-4.9.11.0.tar
+CONJUR_APPLIANCE_TAR=~/conjur-install-images/conjur-appliance-4.9.12.0.tar
 
 # after running this script, the demo will run w/o internet access
 

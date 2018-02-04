@@ -17,12 +17,14 @@ declare CONJUR_FOLLOWER_DNS_NAME=conjur-follower.$CONJUR_NAMESPACE.svc.cluster.l
 ##############################
 # MAIN - takes no command line arguments
 
-main() {
+xxmain() {
 	startup_conjur_service
 	configure_conjur_cluster
 	start_load_balancer
 	startup_client
 	start_sync_replication
+}
+main() {
 	start_followers
 	print_config
 	scope launch

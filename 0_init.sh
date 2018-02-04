@@ -5,7 +5,7 @@ case $ORCHESTRATOR in
   kubernetes) ;;
   openshift) ;;
   *)
-	printf "Set ORCHESTRATOR env var to either "kubernetes" or "openshift"\n\n"
+	printf "source bootstrap.k8s.env or bootstrap.oshift.env to configure initial environment, then run $0\n\n"
 	exit -1
 esac
 
@@ -18,8 +18,6 @@ main() {
   create_demo_config_file
   source ./$DEMO_CONFIG_FILE
   create_contexts
-  printf "Now set DEMO_ROOT to the current directory and DEMO_CONFIG_FILE to openkube.conf\n"
-  printf "\n\texport DEMO_ROOT=$(pwd)\n\texport DEMO_CONFIG_FILE=openkube.conf\n\n"
 }
 
 ##############################
@@ -28,10 +26,15 @@ startup_env() {
 
 	kubernetes)
 		KUBECONFIG=~/.kube/config
+		minikube config set memory $MINIKUBE_VM_MEMORY
 		if [[ "$(minikube status | awk '/minikube:/ {print $2}')" != "Running" ]]; then
-			minikube start --memory 8192
-			if [[ ! -f $KUBECONFIG.bak ]]; then
+			minikube start --memory $MINIKUBE_VM_MEMORY \
+					--vm-driver virtualbox \
+					--kubernetes-version $KUBERNETES_VERSION
+			if [[ -f $KUBECONFIG ]]; then
+			  if [[ ! -f $KUBECONFIG.bak ]]; then
 				cp $KUBECONFIG $KUBECONFIG.bak
+			  fi
 			fi
 		fi
 				# restore initial client state
@@ -43,7 +46,10 @@ startup_env() {
 	openshift)
 		KUBECONFIG=~/.minishift/machines/minishift_kubeconfig
 		if [[ "$(minishift status | awk '/Minishift:/ {print $2}')" != "Running" ]]; then
-			minishift start --memory 8192 --vm-driver virtualbox --show-libmachine-logs
+			minishift start --memory $MINISHIFT_VM_MEMORY \
+					--vm-driver virtualbox \
+					--show-libmachine-logs \
+					--openshift-version $OPENSHIFT_VERSION
 			if [[ ! -f $KUBECONFIG.bak ]]; then
 				cp $KUBECONFIG $KUBECONFIG.bak
 			fi
