@@ -34,7 +34,7 @@ CONJURRC
 	export CONJURRC=$(pwd)/conjurrc
 	echo "export CONJURRC=$(pwd)/conjurrc" >> $DEMO_ROOT/$DEMO_CONFIG_FILE
 	conjur authn login -u admin -p Cyberark1
-	conjur bootstrap
+#	conjur bootstrap
 }
 
 ##########################
