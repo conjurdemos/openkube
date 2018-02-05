@@ -22,7 +22,7 @@ Prerequisites:
 
 # `authn-k8s` scale demo
 
-`./authn_k8s_scale_demo` (directory) - scripts and support for running the scalability demo using authn-k8s
+`./webapp_demo` (directory) - scripts and support for running the scalability demo using authn-k8s
 
 - 0_demo_init.sh - configure and login the local command-line interface.
 - 1_load_k8s_policy.sh - loads the policies which are performed by the Kubernetes admi.n

@@ -1,21 +1,16 @@
 #!/bin/bash 
 set -o pipefail
 
+source $DEMO_ROOT/$DEMO_CONFIG_FILE
+
 printf "\n\nBringing down all running containers.\n"
-printf "\n\n\tThis will completely destroy your currently running environment - proceed?\n\n"
+printf "\n\n\tThis will completely destroy your currently running Conjur environment - proceed?\n\n"
 select yn in "Yes" "No"; do
   case $yn in
       Yes ) break;;
       No ) exit -1;;
   esac
 done
-
-if [[ "$ORCHESTRATOR" == "" ]]; then
-	printf "\nSet env var ORCHESTRATOR to either 'kubernetes' or 'openshift'.\n\n"
-	exit -1
-fi
-
-source $DEMO_ROOT/$DEMO_CONFIG_FILE
 
 declare CONFIG_DIR=conjur-service
 

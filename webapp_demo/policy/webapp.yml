@@ -7,5 +7,5 @@
   - !grant
     role: !layer
     members:
-    - !host /conjur/authn-k8s/minikube/webapp/apps/webapp
-    - !host /conjur/authn-k8s/minikube/webapp/apps/webapp-summon
+    - !host /conjur/authn-k8s/minikube/apps/webapp/deployment/webapp
+    - !host /conjur/authn-k8s/minikube/apps/webapp/deployment/webapp-summon

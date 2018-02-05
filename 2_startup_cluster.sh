@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 set -eo pipefail
 
 source $DEMO_ROOT/$DEMO_CONFIG_FILE
@@ -46,12 +46,13 @@ startup_conjur_service() {
 			printf "\n\nCase stmt error in $0.\n\n"
 	esac
 	sleep 2
-		        # get list of the master/standby candidates
-        pod_list=$($KUBECTL get pods -l app=conjur-node --no-headers \
-							| awk '{ print $1 }')
-			# select first pod in list to be master
+
+	# get list of the master/standby candidates
+	pod_list=$($KUBECTL get pods -l app=conjur-node --no-headers \
+			| awk '{ print $1 }')
+	# select first pod in list to be master
 	MASTER_POD_NAME=$(echo $pod_list | awk '{print $1}' )
-			# give containers time to get running
+	# give containers time to get running
 	echo "Waiting for pods to launch"
 	sleep 5
 	while [[ $($KUBECTL exec $MASTER_POD_NAME evoke role) != "blank" ]]; do
@@ -67,7 +68,7 @@ startup_conjur_service() {
 configure_conjur_cluster() {
 	./etc/set_context.sh $CONJUR_CONTEXT
 
-        $KUBECTL label --overwrite pod $MASTER_POD_NAME role=master
+	$KUBECTL label --overwrite pod $MASTER_POD_NAME role=master
 
 	printf "Configuring conjur-master %s...\n" $MASTER_POD_NAME
 	# configure Conjur master server using evoke
@@ -89,11 +90,11 @@ configure_conjur_cluster() {
 
 	# get list of the other pods 
 	pod_list=$($KUBECTL get pods -l role=unset --no-headers \
-							| awk '{ print $1 }')
+			| awk '{ print $1 }')
 	for pod_name in $pod_list; do
 		printf "Configuring standby %s...\n" $pod_name
-				# label pod with role
-                $KUBECTL label --overwrite pod $pod_name role=standby
+		# label pod with role
+		$KUBECTL label --overwrite pod $pod_name role=standby
 		$KUBECTL cp $CONFIG_DIR/standby-seed.tar $pod_name:/tmp/standby-seed.tar
 		$KUBECTL exec $pod_name evoke unpack seed /tmp/standby-seed.tar
 		$KUBECTL exec $pod_name -- evoke configure standby -j /etc/conjur.json -i $MASTER_POD_IP
@@ -103,7 +104,6 @@ configure_conjur_cluster() {
 
 ##########################
 start_load_balancer() {
-
 	./etc/set_context.sh $CONJUR_CONTEXT
 
 	# start up load balancer
@@ -119,12 +119,12 @@ startup_client() {
 	pushd $DEMO_ROOT/build/cli_client
 	./deploy.sh
 	popd
-
-	./etc/set_context.sh $CONJUR_CONTEXT
 }
 
 ##########################
 start_sync_replication() {
+	./etc/set_context.sh $CONJUR_CONTEXT
+
 	num_standbys=$($KUBECTL get pods -l role=standby --no-headers | wc -l)
 	if [ $num_standbys > 1 ]; then
 		printf "Starting synchronous replication...\n"
@@ -142,16 +142,16 @@ start_followers() {
 
 	sleep 5		# allow pods to get running
 
-         # get list of follower pods 
-        pod_list=$($KUBECTL get pods -lrole=follower --no-headers | awk '{print $1}')
-        for pod_name in $pod_list; do
-                printf "Configuring follower %s...\n" $pod_name
-                # label pod with role
-                $KUBECTL label --overwrite pod $pod_name role=follower
-                # configure follower
-                $KUBECTL cp $DEMO_ROOT/$CONFIG_DIR/follower-seed.tar $pod_name:/tmp/follower-seed.tar
-                $KUBECTL exec $pod_name evoke unpack seed /tmp/follower-seed.tar
-                $KUBECTL exec $pod_name -- evoke configure follower -j /etc/conjur.json 
+		# get list of follower pods 
+	pod_list=$($KUBECTL get pods -lrole=follower --no-headers | awk '{print $1}')
+	for pod_name in $pod_list; do
+		printf "Configuring follower %s...\n" $pod_name
+		# label pod with role
+		$KUBECTL label --overwrite pod $pod_name role=follower
+		# configure follower
+		$KUBECTL cp $DEMO_ROOT/$CONFIG_DIR/follower-seed.tar $pod_name:/tmp/follower-seed.tar
+		$KUBECTL exec $pod_name evoke unpack seed /tmp/follower-seed.tar
+		$KUBECTL exec $pod_name -- evoke configure follower -j /etc/conjur.json 
 	done
 }
 

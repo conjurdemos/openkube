@@ -4,7 +4,6 @@ set -eo pipefail
 source $DEMO_ROOT/$DEMO_CONFIG_FILE
 
 main() {
-
 	$DEMO_ROOT/etc/set_context.sh $CONJUR_CONTEXT
 
 	echo Grabbing the conjur.pem

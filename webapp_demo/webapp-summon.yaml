@@ -1,4 +1,9 @@
 ---
+##
+# for older Openshift versions
+#apiVersion: v1
+#kind: DeploymentConfig
+##
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
@@ -34,21 +39,16 @@ spec:
         - name: CONJUR_APPLIANCE_URL
           value: https://conjur-follower.conjur.svc.cluster.local/api
         - name: CONJUR_AUTHN_URL
-          value: https://conjur-follower.conjur.svc.cluster.local/api/authn-k8s/minikube/webapp
+          value: https://conjur-follower.conjur.svc.cluster.local/api/authn-k8s/minikube
         - name: CONJUR_ACCOUNT
           value: dev
         - name: CONJUR_AUTHN_LOGIN
-          value: webapp-summon
+          value: webapp/deployment/webapp-summon
         - name: CONJUR_SSL_CERTIFICATE
           valueFrom:
             configMapKeyRef:
               name: webapp
               key: ssl_certificate
-        - name: CONJUR_CLIENT_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: conjur-client-api-key
-              key: api-key
         volumeMounts:
         - mountPath: /run/conjur
           name: conjur-access-token

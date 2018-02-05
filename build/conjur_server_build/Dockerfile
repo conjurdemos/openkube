@@ -1,6 +1,6 @@
 FROM conjur-appliance:4.9-stable
 
-ENV AUTHN_K8S_VERSION 0.2.0.0-91ac501
+ENV AUTHN_K8S_VERSION 0.5.0.1-5a91c89
 
 COPY conjur-authn-k8s_${AUTHN_K8S_VERSION}_amd64.deb /tmp
 
